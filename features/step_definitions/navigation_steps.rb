@@ -29,3 +29,10 @@ When(/^I click on the navigation sublink:$/) do |table|
     page.click_on_navigation_level_4 table
   end  
 end
+
+When(/^I mouse over the navigation menu:$/) do |table|
+  sleep 5
+  on Navigation do |page|
+    page.check_navigation_links table
+  end  
+end

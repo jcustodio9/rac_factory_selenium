@@ -1,23 +1,23 @@
 require 'selenium-webdriver'
-#require 'webdriver-user-agent'
+require 'webdriver-user-agent'
+require 'test/unit/assertions'
 require 'selenium/server'
 require 'rubygems'
 
 #define the browser object based on the command line input
 case ENV['BROWSER']
 	when "iphone","ipad","android_phone","android_tablet" then
-		driver = Webdriver::UserAgent.driver(:browser => :chrome, :agent => :ENV['BROWSER'], :orientation => :portrait)
-		#browser = Selenium::WebDriver.for driver
-		browser.window.move_to(0, 0)
+		browser = Webdriver::UserAgent.driver(:browser => :chrome, :agent => :ENV['BROWSER'], :orientation => :portrait)
+		browser.manage.window.move_to(0, 0)
 
 		if ENV['BROWSER'].match /iphone/i
-			browser.window.resize_to 320, 568 #approximate iphone size
+			browser.manage.window.resize_to 320, 568 #approximate iphone size
 		elsif ENV['BROWSER'].match /ipad/i
-			browser.window.resize_to 768, 1024 #approzimate ipad size
+			browser.manage.window.resize_to 768, 1024 #approzimate ipad size
 		elsif ENV['BROWSER'].match /android_tablet/i
-			browser.window.resize_to 600, 960 #approximate nexus 7 size
+			browser.manage.window.resize_to 600, 960 #approximate nexus 7 size
 		else
-			browser.window.resize_to 360, 598 #approximate nexus 5 size
+			browser.manage.window.resize_to 360, 598 #approximate nexus 5 size
 		end		
 
 	when "firefox" then
@@ -50,6 +50,7 @@ end
 
 #before each scenario set the browser object to the one defined
 Before do
+	browser.manage.delete_all_cookies
 	@browser = browser
 end
 
