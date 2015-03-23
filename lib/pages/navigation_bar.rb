@@ -3,21 +3,27 @@ class Navigation
 
   	#xpath for the pc version of menu, submenu, and link
   	@@nav_1 = '//ul[@class="megaNav"]//a[contains(@id, "%{menu}")]'
- 	@@nav_2 = '//ul[@class="megaNav"]//div[contains(@id, "%{menu}")]/div[contains(@class, "navigationColumn1")]/ul/li/h4/a[contains(text(), "%{submenu}")]'
-  	@@nav_3 = '//ul[@class="megaNav"]//div[contains(@id, "%{menu}")]/div[contains(@class, "navigationColumn1")]/ul/li/a[contains(text(), "%{link}")]'
+
+    @@nav_2 = '//ul[@class="megaNav"]//div[contains(@id, "%{menu}")]/div[contains(@class, "navigationColumn1")]/ul/li'
+ 	@@nav_2a = @@nav_2 + '/h4/a[contains(text(), "%{submenu}")]'
+    @@nav_2b = @@nav_2 + '/h4[contains(text(), "%{submenu}")]'
+    @@nav_2c = @@nav_2 + '/a/h4[contains(text(), "%{submenu}")]'
+    @@nav_3 = '//ul[@class="megaNav"]//div[contains(@id, "%{menu}")]/div[contains(@class, "navigationColumn1")]/ul/li/a[contains(text(), "%{link}")]'
 	
     # Mobile navigation menu
+    @@mobile_logo = '//a[@class="logo"]'
     @@mobile_nav_menu_container = '//div[contains(@class, "af_panelGroupLayout")]'
 
     #To use when menu has 1-3 levels
-    @@mobile_level_1_expand = '//ul[@class="subMenu"]//a[contains(@class, "%{menu}")]/span'
+    @@mobile_level_1_expand = '//ul[@class="subMenu"]//a[contains(text(), "%{menu}")]/span'
     @@mobile_level_2_expand = @@mobile_nav_menu_container + '//div[contains(@class, "accordion")]/header[contains(text(), "%{submenu}")]/span'
     
     @@mobile_level_1_link = @@mobile_nav_menu_container + '//div/section/a[contains(text(), "%{link}")]'
     @@mobile_level_2_link = @@mobile_nav_menu_container + '//div[contains(@class, "accordion")]/header[contains(text(), "%{submenu}")]'
     
     #Additional to use when menu has 4 levels
-    @@mobile_level_2_addtl_expand = @@mobile_nav_menu_container + '//ul[contains(@class, "subMenu")]//a[contains(text(), "%{submenu}")]/span'
+    @@mobile_level_1_addtl_expand = @@mobile_nav_menu_container + '//ul[contains(@class, "subMenu")]//a[contains(text(), "%{submenu}")]/span'
+    @@mobile_level_2_addtl_expand = @@mobile_nav_menu_container + '//ul[contains(@class, "subMenu")]//a[contains(text(), "%{link}")]/span'
     @@mobile_level_3_expand = @@mobile_nav_menu_container + '//div[contains(@class, "accordion")]/header[contains(text(), "%{link}")]/span'  
     @@mobile_level_3_link = @@mobile_nav_menu_container + '//div[contains(@class, "accordion")]/header[contains(text(), "%{link}")]/following-sibling::section/a[contains(text(), "%{sublink}")]'
 
@@ -28,35 +34,54 @@ class Navigation
         menus.each do |menu_item| 
         case ENV['BROWSER']
             when "iphone","ipad","android_phone","android_tablet" then
-                #Expand Level 1
+                # Level 1
                 location = @@mobile_level_1_expand % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
                 expand_mobile_nav_menu_line location
-                #Expand Level 2
-                location = @@mobile_level_2_expand % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
-                expand_mobile_nav_menu_line location
-                #click on the menu link
-                location = @@mobile_menu_link % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
-                menu_tem=Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
-                if @browser.find_element(:xpath, location).displayed?
-                    @browser.mouse.move_to @browser.find_element(:xpath, location)
-                else
-                    puts "Link not found : #{menu_item[:link]}"
+                
+                # Level 2
+                location = @@mobile_level_1_addtl_expand % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
+                unless "#{menu_item[:submenu]}".eql? ""
+                    expand_mobile_nav_menu_line location
                 end
+                
+                # Level 3: NEED TO EDIT!!!
+                location = @@mobile_level_2_addtl_expand  % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),!v.empty?]}]
+                unless "#{menu_item[:link]}".eql? ""
+                    expand_mobile_nav_menu_line location
+                end
+
+                @browser.find_element(:xpath, @@mobile_logo).click
+
             else   
                 # Level 1
+                sleep 0.3
                 location = @@nav_1 % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
                 @browser.mouse.move_to @browser.find_element(xpath: location)
+                
                 # Level 2
-                location = @@nav_2 % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
-                @browser.mouse.move_to @browser.find_element(xpath: location)
+                sleep 0.4
+                location1 = @@nav_2a % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
+                location2 = @@nav_2b % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
+                location3 = @@nav_2c % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
+
+                case location
+                when location = location1 then
+                    @browser.mouse.move_to @browser.find_element(:xpath, location1)
+                when location = location2 then
+                    @browser.mouse.move_to @browser.find_element(:xpath, location2)
+                when location = location3 then
+                    @browser.mouse.move_to @browser.find_element(:xpath, location3)
+                end
+
                 # Level 3
+                sleep 0.3
                 location = @@nav_3 % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
-                menu_tem=Hash[menu_item.map{|(k,v)| [k.to_sym,v]}]
                 if @browser.find_element(:xpath, location).displayed?
                     @browser.mouse.move_to @browser.find_element(:xpath, location)
-                else
+                else 
                     puts "Link not found : #{menu_item[:link]}"
                 end
+                sleep 0.3
             end 
         end 
     end # check_nav_links
@@ -147,7 +172,7 @@ class Navigation
                 expand_mobile_nav_menu_line location
                 #Expand Level 2
                 sleep 1
-                location = @@mobile_level_2_addtl_expand % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
+                location = @@mobile_level_1_addtl_expand % Hash[menu_item.map{|(k,v)| [k.to_sym(&:downcase),v]}]
                 expand_mobile_nav_menu_line location
                 sleep 1
                 #Expand Level 3

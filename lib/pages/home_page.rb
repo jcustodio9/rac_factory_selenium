@@ -6,7 +6,6 @@ class HomePage
 	#opens the url defined in ENV['URL']
 	def goto_homepage
   		visit(HomePage)
-  		loading_wait
   	end
 
 
